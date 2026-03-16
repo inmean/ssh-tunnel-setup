@@ -2,7 +2,7 @@
 # SSH Tunnel Setup Script for OpenClaw Gateway
 # This script sets up a persistent SSH reverse tunnel for OpenClaw gateway communication with nodes on Linux using systemd.
 
-set -e
+set -x
 # set -x    # Enable trace mode for debugging
 
 # Exit codes
@@ -82,6 +82,7 @@ if [ "$REMOVE_MODE" = false ]; then
         # Interactive terminal
         read -p "Enter remote host or IP: " REMOTE_HOST
         read -p "Enter remote SSH port [22]: " REMOTE_PORT
+        REMOTE_PORT=${REMOTE_PORT:-22}
         read -p "Enter remote SSH username: " REMOTE_USER
         read -p "Enter remote gateway port [18789]: " GATEWAY_PORT
         GATEWAY_PORT=${GATEWAY_PORT:-18789}
