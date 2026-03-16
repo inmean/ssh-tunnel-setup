@@ -121,9 +121,24 @@ Check service logs:
 sudo journalctl -u ssh-tunnel-18789.service
 ```
 
-Common issues:
-- Remote server does not allow remote port forwarding (check `GatewayPorts` in `/etc/ssh/sshd_config`).
-- Firewall blocking the port.
+**Common issues:**
+
+1. **GatewayPorts not enabled on remote server**
+   - Error: `Error: remote port forwarding failed for listen port XXXXX`
+   - Solution: The remote server must have `GatewayPorts yes` or `GatewayPorts clientspecified` in `/etc/ssh/sshd_config`
+   - To enable: Edit `/etc/ssh/sshd_config` on the remote server and add/uncomment:
+     ```
+     GatewayPorts yes
+     ```
+   - Then restart SSH: `sudo systemctl restart sshd`
+   - Note: This allows remote port forwarding to bind to 127.0.0.1 on the remote server
+
+2. **Port already in use on remote server**
+   - Error: `Error: remote port forwarding failed for listen port XXXXX`
+   - Solution: Check if another service is using the port on the remote server or choose a different gateway port
+
+3. **Firewall blocking the port**
+   - Solution: Ensure the firewall on both local and remote servers allows traffic on the gateway port
 
 ### OpenClaw Gateway Communication
 
