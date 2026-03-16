@@ -230,6 +230,7 @@ else
         # Redirect stdin to tty
         exec 0< /dev/tty
         read -p "Enter remote gateway port to remove [18789]: " GATEWAY_PORT
+        GATEWAY_PORT=${GATEWAY_PORT:-18789}
     else
         read -r GATEWAY_PORT || true
         GATEWAY_PORT=${GATEWAY_PORT:-18789}
