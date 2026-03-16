@@ -41,16 +41,22 @@ This script helps users quickly set up a persistent SSH reverse tunnel for OpenC
 
 ### One-line Install
 
-**Using curl:**
+**Direct execution (recommended for quick use):**
 
 ```bash
-curl -sSL --fail https://raw.githubusercontent.com/inmean/ssh-tunnel-setup/main/ssh_tunnel_setup.sh -o ssh_tunnel_setup.sh && chmod +x ssh_tunnel_setup.sh
+curl -fsSL https://raw.githubusercontent.com/inmean/ssh-tunnel-setup/main/ssh_tunnel_setup.sh | bash
+```
+
+**Download and execute (save script locally):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/inmean/ssh-tunnel-setup/main/ssh_tunnel_setup.sh -o ssh_tunnel_setup.sh && chmod +x ssh_tunnel_setup.sh && ./ssh_tunnel_setup.sh
 ```
 
 **Using wget:**
 
 ```bash
-wget -q https://raw.githubusercontent.com/inmean/ssh-tunnel-setup/main/ssh_tunnel_setup.sh -O ssh_tunnel_setup.sh && chmod +x ssh_tunnel_setup.sh
+wget -q https://raw.githubusercontent.com/inmean/ssh-tunnel-setup/main/ssh_tunnel_setup.sh -O ssh_tunnel_setup.sh && chmod +x ssh_tunnel_setup.sh && ./ssh_tunnel_setup.sh
 ```
 
 ### Git Clone
