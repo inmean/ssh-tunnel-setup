@@ -171,15 +171,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=$(whoami)
-ExecStart=/usr/bin/ssh -i "$KEY_PATH" \
-  -p $REMOTE_PORT \
-  -o StrictHostKeyChecking=accept-new \
-  -o ServerAliveInterval=60 \
-  -o ServerAliveCountMax=3 \
-  -o ExitOnForwardFailure=yes \
-  -N \
-  -R 127.0.0.1:$GATEWAY_PORT:127.0.0.1:$GATEWAY_PORT \
-  "$REMOTE_USER@$REMOTE_HOST"
+ExecStart=/usr/bin/ssh -i "$KEY_PATH" -p $REMOTE_PORT -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -N -R 127.0.0.1:$GATEWAY_PORT:127.0.0.1:$GATEWAY_PORT $REMOTE_USER@$REMOTE_HOST
 Restart=always
 RestartSec=10
 
