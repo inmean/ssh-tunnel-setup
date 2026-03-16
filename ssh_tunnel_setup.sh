@@ -84,7 +84,7 @@ if [ "$REMOVE_MODE" = false ]; then
         read -p "Enter remote SSH port [22]: " REMOTE_PORT
         read -p "Enter remote SSH username: " REMOTE_USER
         read -p "Enter remote gateway port [18789]: " GATEWAY_PORT
-        read -p "Enter local SSH key path [~/.ssh/id_rsa]: " KEY_PATH
+        read -p "Enter local SSH key path [$HOME/.ssh/id_rsa]: " KEY_PATH
     else
         # Non-interactive (piped input)
         echo "Running in non-interactive mode. Using defaults or arguments."
@@ -98,7 +98,7 @@ if [ "$REMOVE_MODE" = false ]; then
         # Apply defaults
         REMOTE_PORT=${REMOTE_PORT:-22}
         GATEWAY_PORT=${GATEWAY_PORT:-18789}
-        KEY_PATH=${KEY_PATH:-~/.ssh/id_rsa}
+        KEY_PATH=${KEY_PATH:-$HOME/.ssh/id_rsa}
     fi
 
     # Validate inputs
@@ -109,7 +109,12 @@ if [ "$REMOVE_MODE" = false ]; then
         error_exit "Remote username is required." "$EXIT_GENERAL_ERROR"
     fi
     
-    KEY_PATH=$(eval echo "$KEY_PATH")  # Expand ~
+    # Set default key path if empty and expand ~ to full home directory path
+    if [ -z "$KEY_PATH" ]; then
+        KEY_PATH="$HOME/.ssh/id_rsa"
+    else
+        KEY_PATH="${KEY_PATH/#\~/$HOME}"
+    fi
 
     # Check if port is already in use
     if port_in_use "$GATEWAY_PORT"; then
