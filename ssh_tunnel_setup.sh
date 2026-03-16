@@ -161,6 +161,15 @@ if [ "$REMOVE_MODE" = false ]; then
     CMD="ssh-copy-id -i \"${KEY_PATH}.pub\" -o StrictHostKeyChecking=accept-new -p \"$REMOTE_PORT\" \"$REMOTE_USER@$REMOTE_HOST\""
     echo "Running: $CMD"
     eval $CMD || error_exit "Failed to copy public key to remote server. Check password authentication." "$EXIT_SSH_FAILURE"
+    
+    # Check if remote server allows GatewayPorts for remote port forwarding
+    echo "Checking remote server GatewayPorts setting..."
+    GW_CHECK=$(ssh -i "$KEY_PATH" -p "$REMOTE_PORT" -o StrictHostKeyChecking=accept-new "$REMOTE_USER@$REMOTE_HOST" "grep -i '^[[:space:]]*GatewayPorts' /etc/ssh/sshd_config 2>/dev/null || echo 'not found'" 2>/dev/null)
+    if [[ "$GW_CHECK" =~ "no" ]] || [[ "$GW_CHECK" =~ "not found" ]]; then
+        echo "WARNING: Remote server may not have GatewayPorts enabled."
+        echo "This is required for remote port forwarding to work."
+        echo "Please ask the remote server administrator to set 'GatewayPorts yes' in /etc/ssh/sshd_config"
+    fi
 
     # Create systemd service
     SERVICE_NAME="ssh-tunnel-$GATEWAY_PORT.service"
