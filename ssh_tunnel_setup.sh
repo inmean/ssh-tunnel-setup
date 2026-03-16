@@ -162,14 +162,8 @@ if [ "$REMOVE_MODE" = false ]; then
     echo "Running: $CMD"
     eval $CMD || error_exit "Failed to copy public key to remote server. Check password authentication." "$EXIT_SSH_FAILURE"
     
-    # Check if remote server allows GatewayPorts for remote port forwarding
-    echo "Checking remote server GatewayPorts setting..."
-    GW_CHECK=$(ssh -i "$KEY_PATH" -p "$REMOTE_PORT" -o StrictHostKeyChecking=accept-new "$REMOTE_USER@$REMOTE_HOST" "grep -i '^[[:space:]]*GatewayPorts' /etc/ssh/sshd_config 2>/dev/null || echo 'not found'" 2>/dev/null)
-    if [[ "$GW_CHECK" =~ "no" ]] || [[ "$GW_CHECK" =~ "not found" ]]; then
-        echo "WARNING: Remote server may not have GatewayPorts enabled."
-        echo "This is required for remote port forwarding to work."
-        echo "Please ask the remote server administrator to set 'GatewayPorts yes' in /etc/ssh/sshd_config"
-    fi
+    # Note: Using local port forwarding (-L), not remote port forwarding (-R)
+    # No GatewayPorts configuration needed on remote server
 
     # Create systemd service
     SERVICE_NAME="ssh-tunnel-$GATEWAY_PORT.service"
@@ -178,14 +172,14 @@ if [ "$REMOVE_MODE" = false ]; then
     echo "Creating systemd service $SERVICE_NAME..."
     cat <<EOF | run_sudo tee "$SERVICE_FILE" >/dev/null
 [Unit]
-Description=SSH Reverse Tunnel to $REMOTE_HOST:$GATEWAY_PORT (OpenClaw Gateway)
+Description=SSH Local Tunnel to $REMOTE_HOST:$GATEWAY_PORT (OpenClaw Gateway)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=$(whoami)
-ExecStart=/usr/bin/ssh -i "$KEY_PATH" -p $REMOTE_PORT -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -N -R 127.0.0.1:$GATEWAY_PORT:127.0.0.1:$GATEWAY_PORT $REMOTE_USER@$REMOTE_HOST
+ExecStart=/usr/bin/ssh -i "$KEY_PATH" -p $REMOTE_PORT -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -N -L 127.0.0.1:$GATEWAY_PORT:127.0.0.1:$GATEWAY_PORT $REMOTE_USER@$REMOTE_HOST
 Restart=always
 RestartSec=10
 

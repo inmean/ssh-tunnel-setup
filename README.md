@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Automated SSH reverse tunnel setup for OpenClaw gateway communication with nodes on Linux using systemd.
+Automated SSH local tunnel setup for OpenClaw gateway communication with nodes on Linux using systemd.
 
 ## Table of Contents
 
@@ -19,7 +19,9 @@ Automated SSH reverse tunnel setup for OpenClaw gateway communication with nodes
 
 ## Purpose
 
-This script helps users quickly set up a persistent SSH reverse tunnel for OpenClaw gateway communication with nodes on Linux. It automates the process of generating SSH keys, authorizing remote access, and creating a systemd service for the tunnel.
+This script helps users quickly set up a persistent SSH local tunnel for OpenClaw gateway communication with nodes on Linux. It automates the process of generating SSH keys, authorizing remote access, and creating a systemd service for the tunnel.
+
+The tunnel binds to `127.0.0.1:18789` on the local machine and forwards connections to `127.0.0.1:18789` on the remote server.
 
 ## Features
 
@@ -123,26 +125,22 @@ sudo journalctl -u ssh-tunnel-18789.service
 
 **Common issues:**
 
-1. **GatewayPorts not enabled on remote server**
-   - Error: `Error: remote port forwarding failed for listen port XXXXX`
-   - Solution: The remote server must have `GatewayPorts yes` or `GatewayPorts clientspecified` in `/etc/ssh/sshd_config`
-   - To enable: Edit `/etc/ssh/sshd_config` on the remote server and add/uncomment:
-     ```
-     GatewayPorts yes
-     ```
-   - Then restart SSH: `sudo systemctl restart sshd`
-   - Note: This allows remote port forwarding to bind to 127.0.0.1 on the remote server
+1. **Port already in use on local machine**
+   - Error: `Address already in use` or similar
+   - Solution: Check if another service is using the port on your local machine or choose a different gateway port
 
-2. **Port already in use on remote server**
-   - Error: `Error: remote port forwarding failed for listen port XXXXX`
-   - Solution: Check if another service is using the port on the remote server or choose a different gateway port
+2. **Firewall blocking the port**
+   - Solution: Ensure the firewall on your local machine allows traffic on the gateway port (18789)
 
-3. **Firewall blocking the port**
-   - Solution: Ensure the firewall on both local and remote servers allows traffic on the gateway port
+3. **SSH connection failed**
+   - Error: `Permission denied (publickey,password)`
+   - Solution: Ensure your SSH key is properly authorized on the remote server
 
 ### OpenClaw Gateway Communication
 
-This tunnel is designed for OpenClaw gateway-to-node communication. After setup, configure your OpenClaw node to connect to `127.0.0.1:<gateway_port>`.
+This tunnel is designed for OpenClaw gateway-to-node communication. The tunnel binds to `127.0.0.1:18789` on your local machine and forwards connections to `127.0.0.1:18789` on the remote server.
+
+After setup, configure your OpenClaw node to connect to `127.0.0.1:18789` on your local machine.
 
 ## License
 
