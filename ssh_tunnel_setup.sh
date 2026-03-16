@@ -116,10 +116,30 @@ if [ "$REMOVE_MODE" = false ]; then
         error_exit "Port $GATEWAY_PORT is already in use. Please choose a different port or stop the existing service." "$EXIT_PORT_IN_USE"
     fi
 
-    # Check if key exists, generate if not
+    # Check if key exists
     if [ ! -f "$KEY_PATH" ]; then
-        echo "Generating SSH key pair at $KEY_PATH..."
-        ssh-keygen -t rsa -b 4096 -f "$KEY_PATH" -N "" || error_exit "Failed to generate SSH key." "$EXIT_SSH_FAILURE"
+        GENERATE_KEY=false
+        if [ -t 0 ]; then
+            # Interactive terminal
+            read -p "SSH key not found at $KEY_PATH. Generate new key? [y/N]: " GENERATE_RESPONSE
+            if [[ "$GENERATE_RESPONSE" =~ ^[Yy]$ ]]; then
+                GENERATE_KEY=true
+            fi
+        else
+            # Non-interactive mode - ask via prompt but read from stdin
+            echo "SSH key not found at $KEY_PATH. Generate new key? [y/N]: "
+            read -r GENERATE_RESPONSE || true
+            if [[ "$GENERATE_RESPONSE" =~ ^[Yy]$ ]]; then
+                GENERATE_KEY=true
+            fi
+        fi
+        
+        if [ "$GENERATE_KEY" = true ]; then
+            echo "Generating SSH key pair at $KEY_PATH..."
+            ssh-keygen -t rsa -b 4096 -f "$KEY_PATH" -N "" || error_exit "Failed to generate SSH key." "$EXIT_SSH_FAILURE"
+        else
+            error_exit "SSH key not found at $KEY_PATH. Please provide an existing key or generate a new one." "$EXIT_GENERAL_ERROR"
+        fi
     fi
 
     # Set permissions
