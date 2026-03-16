@@ -46,14 +46,17 @@ if ! command_exists systemctl; then
     error_exit "systemd is not available. This script requires systemd to manage services." "$EXIT_SYSTEMD_FAILURE"
 fi
 
-# Check for sudo privileges (non-interactive)
-if ! sudo -n true 2>/dev/null; then
-    error_exit "This script requires sudo privileges. Please run with sudo or ensure your user has passwordless sudo access." "$EXIT_GENERAL_ERROR"
-fi
-
 if ! command_exists ss; then
     error_exit "ss command (from iproute2) is not available. Please install iproute2 before running this script." "$EXIT_GENERAL_ERROR"
 fi
+
+# Function to run sudo commands with better error handling
+run_sudo() {
+    if ! sudo "$@" 2>/dev/null; then
+        error_exit "Failed to run: sudo $*
+This script requires sudo privileges. Please run the script with sudo or ensure your user has passwordless sudo access." "$EXIT_SYSTEMD_FAILURE"
+    fi
+}
 
 # Interactive configuration
 echo "=== SSH Tunnel Setup for OpenClaw Gateway ==="
@@ -119,7 +122,7 @@ if [ "$REMOVE_MODE" = false ]; then
     SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
 
     echo "Creating systemd service $SERVICE_NAME..."
-    cat <<EOF | sudo tee "$SERVICE_FILE" >/dev/null
+    cat <<EOF | run_sudo tee "$SERVICE_FILE" >/dev/null
 [Unit]
 Description=SSH Reverse Tunnel to $REMOTE_HOST:$GATEWAY_PORT (OpenClaw Gateway)
 After=network-online.target
@@ -145,13 +148,13 @@ WantedBy=multi-user.target
 EOF
 
     # Enable and start service
-    sudo systemctl daemon-reload || error_exit "Failed to reload systemd daemon." "$EXIT_SYSTEMD_FAILURE"
-    sudo systemctl enable "$SERVICE_NAME" || error_exit "Failed to enable service." "$EXIT_SYSTEMD_FAILURE"
-    sudo systemctl start "$SERVICE_NAME" || error_exit "Failed to start service." "$EXIT_SYSTEMD_FAILURE"
+    run_sudo systemctl daemon-reload
+    run_sudo systemctl enable "$SERVICE_NAME"
+    run_sudo systemctl start "$SERVICE_NAME"
 
     # Verify service
     echo "Checking service status..."
-    sudo systemctl status "$SERVICE_NAME" --no-pager
+    run_sudo systemctl status "$SERVICE_NAME" --no-pager
 
     echo
     echo "=== Setup Complete ==="
@@ -173,15 +176,15 @@ else
     fi
 
     echo "Stopping service $SERVICE_NAME..."
-    sudo systemctl stop "$SERVICE_NAME" || error_exit "Failed to stop service." "$EXIT_SYSTEMD_FAILURE"
+    run_sudo systemctl stop "$SERVICE_NAME"
 
     echo "Disabling service $SERVICE_NAME..."
-    sudo systemctl disable "$SERVICE_NAME" || error_exit "Failed to disable service." "$EXIT_SYSTEMD_FAILURE"
+    run_sudo systemctl disable "$SERVICE_NAME"
 
     echo "Removing service file..."
-    sudo rm "$SERVICE_FILE" || error_exit "Failed to remove service file." "$EXIT_GENERAL_ERROR"
+    run_sudo rm "$SERVICE_FILE"
 
-    sudo systemctl daemon-reload || error_exit "Failed to reload systemd daemon." "$EXIT_SYSTEMD_FAILURE"
+    run_sudo systemctl daemon-reload
 
     echo
     echo "=== Removal Complete ==="
