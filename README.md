@@ -136,6 +136,28 @@ sudo journalctl -u ssh-tunnel-18789.service
    - Error: `Permission denied (publickey,password)`
    - Solution: Ensure your SSH key is properly authorized on the remote server
 
+### No TTY / Terminal Required Error
+
+Error: `sudo: a terminal is required to read the password` or script hangs waiting for input
+- **Cause**: The script requires interactive input but is running in a non-interactive environment (e.g., cron job, CI/CD pipeline, or piped execution without proper terminal)
+- **Solution 1**: Run the script in an interactive terminal:
+  ```bash
+  ./ssh_tunnel_setup.sh
+  ```
+- **Solution 2**: For automated setups, ensure your user has passwordless sudo access or run the script with sudo:
+  ```bash
+  sudo ./ssh_tunnel_setup.sh
+  ```
+- **Solution 3**: If using the one-line installer, run it directly in your terminal (not via cron or automated scripts that don't have TTY access)
+
+### Script appears to hang or skip prompts
+
+- **Cause**: Running via `curl ... | bash` without proper terminal connection
+- **Solution**: The script now uses `/dev/tty` for prompts, which should work with piped execution. If you experience issues:
+  1. Download the script first: `curl -fsSL https://raw.githubusercontent.com/inmean/ssh-tunnel-setup/main/ssh_tunnel_setup.sh -o ssh_tunnel_setup.sh`
+  2. Make it executable: `chmod +x ssh_tunnel_setup.sh`
+  3. Run it directly: `./ssh_tunnel_setup.sh`
+
 ### OpenClaw Gateway Communication
 
 This tunnel is designed for OpenClaw gateway-to-node communication. The tunnel binds to `127.0.0.1:18789` on your local machine and forwards connections to `127.0.0.1:18789` on the remote server.
