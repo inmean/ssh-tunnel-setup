@@ -84,6 +84,7 @@ if [ "$REMOVE_MODE" = false ]; then
         read -p "Enter remote SSH port [22]: " REMOTE_PORT
         read -p "Enter remote SSH username: " REMOTE_USER
         read -p "Enter remote gateway port [18789]: " GATEWAY_PORT
+        GATEWAY_PORT=${GATEWAY_PORT:-18789}
         read -p "Enter local SSH key path [$HOME/.ssh/id_rsa]: " KEY_PATH
     else
         # Non-interactive (piped input)
@@ -107,6 +108,9 @@ if [ "$REMOVE_MODE" = false ]; then
     fi
     if [ -z "$REMOTE_USER" ]; then
         error_exit "Remote username is required." "$EXIT_GENERAL_ERROR"
+    fi
+    if [ -z "$GATEWAY_PORT" ]; then
+        error_exit "Gateway port is required." "$EXIT_GENERAL_ERROR"
     fi
     
     # Set default key path if empty and expand ~ to full home directory path
