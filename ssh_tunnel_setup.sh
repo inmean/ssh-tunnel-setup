@@ -2,7 +2,7 @@
 # SSH Tunnel Setup Script for OpenClaw Gateway
 # This script sets up a persistent SSH reverse tunnel for OpenClaw gateway communication with nodes on Linux using systemd.
 
-set -x
+set -e
 # set -x    # Enable trace mode for debugging
 
 # Exit codes
@@ -70,6 +70,24 @@ if [ -n "$EXISTING_SERVICES" ]; then
     echo "The following SSH tunnel services are currently running:"
     echo "$EXISTING_SERVICES"
     echo
+    
+    # Only prompt if not in remove mode and running interactively
+    if [ "$REMOVE_MODE" = false ]; then
+        if [ -t 0 ]; then
+            # Interactive terminal - ask user
+            read -p "Do you want to set up a new connection? [y/N]: " SETUP_RESPONSE
+            if [[ ! "$SETUP_RESPONSE" =~ ^[Yy]$ ]]; then
+                echo "Setup cancelled."
+                exit $EXIT_SUCCESS
+            fi
+            echo
+        else
+            # Non-interactive (piped) - print warning and continue
+            echo "WARNING: Existing SSH tunnel services found."
+            echo "Continuing with setup... (use --remove flag to remove existing services)"
+            echo
+        fi
+    fi
 else
     echo "No active SSH tunnel services found."
     echo
