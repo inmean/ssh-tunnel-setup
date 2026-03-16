@@ -54,6 +54,18 @@ fi
 echo "=== SSH Tunnel Setup for OpenClaw Gateway ==="
 echo
 
+# Detect existing ssh-tunnel-*.service services
+echo "Checking for existing SSH tunnel services..."
+EXISTING_SERVICES=$(systemctl list-units --type=service --state=active --no-legend --no-pager 2>/dev/null | grep "ssh-tunnel-" || true)
+if [ -n "$EXISTING_SERVICES" ]; then
+    echo "The following SSH tunnel services are currently running:"
+    echo "$EXISTING_SERVICES"
+    echo
+else
+    echo "No active SSH tunnel services found."
+    echo
+fi
+
 if [ "$REMOVE_MODE" = false ]; then
     # Setup mode
     read -p "Enter remote host or IP: " REMOTE_HOST
@@ -148,7 +160,8 @@ else
     SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
 
     if [ ! -f "$SERVICE_FILE" ]; then
-        error_exit "Service $SERVICE_NAME not found." "$EXIT_GENERAL_ERROR"
+        echo "Service $SERVICE_NAME not found. Nothing to remove."
+        exit $EXIT_SUCCESS
     fi
 
     echo "Stopping service $SERVICE_NAME..."
