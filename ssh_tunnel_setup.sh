@@ -46,6 +46,11 @@ if ! command_exists systemctl; then
     error_exit "systemd is not available. This script requires systemd to manage services." "$EXIT_SYSTEMD_FAILURE"
 fi
 
+# Check for sudo privileges (non-interactive)
+if ! sudo -n true 2>/dev/null; then
+    error_exit "This script requires sudo privileges. Please run with sudo or ensure your user has passwordless sudo access." "$EXIT_GENERAL_ERROR"
+fi
+
 if ! command_exists ss; then
     error_exit "ss command (from iproute2) is not available. Please install iproute2 before running this script." "$EXIT_GENERAL_ERROR"
 fi
@@ -104,7 +109,10 @@ if [ "$REMOVE_MODE" = false ]; then
 
     # Copy public key to remote server
     echo "Copying public key to $REMOTE_USER@$REMOTE_HOST:$REMOTE_PORT..."
-    ssh-copy-id -i "${KEY_PATH}.pub" -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" -o StrictHostKeyChecking=accept-new || error_exit "Failed to copy public key to remote server. Check password authentication." "$EXIT_SSH_FAILURE"
+    # Note: ssh-copy-id expects -o options before -p port
+    CMD="ssh-copy-id -i \"${KEY_PATH}.pub\" -o StrictHostKeyChecking=accept-new -p \"$REMOTE_PORT\" \"$REMOTE_USER@$REMOTE_HOST\""
+    echo "Running: $CMD"
+    eval $CMD || error_exit "Failed to copy public key to remote server. Check password authentication." "$EXIT_SSH_FAILURE"
 
     # Create systemd service
     SERVICE_NAME="ssh-tunnel-$GATEWAY_PORT.service"
@@ -120,7 +128,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=$(whoami)
-ExecStart=/usr/bin/ssh -i $KEY_PATH \
+ExecStart=/usr/bin/ssh -i "$KEY_PATH" \
   -p $REMOTE_PORT \
   -o StrictHostKeyChecking=accept-new \
   -o ServerAliveInterval=60 \
@@ -128,7 +136,7 @@ ExecStart=/usr/bin/ssh -i $KEY_PATH \
   -o ExitOnForwardFailure=yes \
   -N \
   -R 127.0.0.1:$GATEWAY_PORT:127.0.0.1:$GATEWAY_PORT \
-  $REMOTE_USER@$REMOTE_HOST
+  "$REMOTE_USER@$REMOTE_HOST"
 Restart=always
 RestartSec=10
 
